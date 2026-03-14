@@ -7,21 +7,28 @@ public class CellInfection : MonoBehaviour
     [SerializeField] private SpriteRenderer sprite;
     [SerializeField] private Color infectedColor = Color.magenta;
 
-    [SerializeField] private GameObject virusPrefab;
+    [SerializeField] private GameObject[] virusAllyPrefab;
     [SerializeField] private ParticleSystem bloodParticles;
     [SerializeField] private float infectionTime = 2f;
+
+    private SpriteRenderer sp;
+
+    [Header("Shake Settings")]
+    [SerializeField] private float shakeIntensity = 0.1f;
 
     private bool playerNearby = false;
     private bool infected = false;
 
+    private Vector3 originalPos;
+
     void Awake()
     {
-        
+        sp = GetComponent<SpriteRenderer>();    
     }
 
     void Start()
     {
-        infectTextGameObj.SetActive(false);
+        originalPos = transform.position;
     }
 
     void Update()
@@ -32,9 +39,10 @@ public class CellInfection : MonoBehaviour
         }
     }
 
-    IEnumerator InfectCell()
+    public IEnumerator InfectCell()
     {
         infected = true;
+        PlayerStats.Instance.COUNT_cellsInfected++;
 
         Color startColor = sprite.color;
         float timer = 0f;
@@ -42,18 +50,24 @@ public class CellInfection : MonoBehaviour
         while (timer < infectionTime)
         {
             timer += Time.deltaTime;
+
             sprite.color = Color.Lerp(startColor, infectedColor, timer / infectionTime);
+
+            //shaking effect
+            Vector2 randomOffset = Random.insideUnitCircle * shakeIntensity;
+            transform.position = originalPos + (Vector3)randomOffset;
+
             yield return null;
         }
 
-        // Play particles
-        if (bloodParticles != null)
-            bloodParticles.Play();
+        transform.position = originalPos;
+        sp.enabled = false;
+        bloodParticles.Play();
 
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.7f);
 
-        // Spawn new virus
-        Instantiate(virusPrefab, transform.position, Quaternion.identity);
+        int randomIndex = Random.Range(0, virusAllyPrefab.Length);
+        Instantiate(virusAllyPrefab[randomIndex], transform.position, Quaternion.identity);
 
         Destroy(gameObject);
     }
@@ -61,16 +75,18 @@ public class CellInfection : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
+        {
             playerNearby = true;
-
-        infectTextGameObj.SetActive(true);
+            infectTextGameObj.SetActive(true);
+        }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
+        {
             playerNearby = false;
-
-        infectTextGameObj.SetActive(false);
+            infectTextGameObj.SetActive(false);
+        }
     }
 }

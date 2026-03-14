@@ -12,6 +12,8 @@ public class VirusMovement : MonoBehaviour
     private Rigidbody2D rb;
     private Vector2 input;
 
+    private int lastGrowthCheckpoint = 0;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -23,17 +25,16 @@ public class VirusMovement : MonoBehaviour
         input.y = Input.GetAxisRaw("Vertical");
 
         input = input.normalized;
+
+        CheckGrowth();
     }
 
     void FixedUpdate()
     {
-        // swimming force
         rb.AddForce(input * moveForce);
 
-        // Limit max speed
         rb.linearVelocity = Vector2.ClampMagnitude(rb.linearVelocity, maxSpeed);
 
-        // drifting movement
         Vector2 drift = new Vector2(
             Mathf.PerlinNoise(Time.time, 0f) - 0.5f,
             Mathf.PerlinNoise(0f, Time.time) - 0.5f
@@ -41,8 +42,23 @@ public class VirusMovement : MonoBehaviour
 
         rb.AddForce(drift);
 
-        // Slight wobble rotation
         float wobble = Mathf.Sin(Time.time * wobbleSpeed) * wobbleAmount;
         rb.rotation = wobble;
+    }
+
+    void CheckGrowth()
+    {
+        int infected = PlayerStats.Instance.COUNT_cellsInfected;
+
+        if (infected >= lastGrowthCheckpoint + 100)
+        {
+            lastGrowthCheckpoint += 100;
+            IncreasePlayerSize();
+        }
+    }
+
+    void IncreasePlayerSize()
+    {
+        transform.localScale += new Vector3(0.5f, 0.5f, 0f);
     }
 }
