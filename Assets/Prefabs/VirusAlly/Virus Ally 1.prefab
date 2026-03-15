@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VirusAutoSpread
   moveSpeed: 10
-  detectionRadius: 4
+  detectionRadius: 6
   cellLayer:
     serializedVersion: 2
     m_Bits: 64

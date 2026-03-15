@@ -50,15 +50,15 @@ public class VirusMovement : MonoBehaviour
     {
         int infected = PlayerStats.Instance.COUNT_cellsInfected;
 
-        if (infected >= lastGrowthCheckpoint + 100)
+        if (infected >= lastGrowthCheckpoint + 1000)
         {
-            lastGrowthCheckpoint += 100;
+            lastGrowthCheckpoint += 1000;
             IncreasePlayerSize();
         }
     }
 
     void IncreasePlayerSize()
     {
-        transform.localScale += new Vector3(0.5f, 0.5f, 0f);
+        transform.localScale += new Vector3(0.2f, 0.2f, 0f);
     }
 }

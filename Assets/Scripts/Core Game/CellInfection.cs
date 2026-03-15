@@ -3,28 +3,28 @@ using System.Collections;
 
 public class CellInfection : MonoBehaviour
 {
+    [Header("UI")]
     [SerializeField] private GameObject infectTextGameObj;
+
+    [Header("Visuals")]
     [SerializeField] private SpriteRenderer sprite;
     [SerializeField] private Color infectedColor = Color.magenta;
-
-    [SerializeField] private GameObject[] virusAllyPrefab;
     [SerializeField] private ParticleSystem bloodParticles;
-    [SerializeField] private float infectionTime = 2f;
 
-    private SpriteRenderer sp;
+    [Header("Virus Spawn")]
+    [SerializeField] private GameObject[] virusAllyPrefab;
+    [SerializeField] private float rareSpawnChanceIndex1 = 0.1f; 
+    [SerializeField] private float rareSpawnChanceIndex2 = 0.1f; 
+    
+    [Header("Infection Settings")]
+    [SerializeField] private float infectionTime = 2f;
 
     [Header("Shake Settings")]
     [SerializeField] private float shakeIntensity = 0.1f;
 
-    private bool playerNearby = false;
-    private bool infected = false;
-
+    private bool playerNearby;
+    private bool infected;
     private Vector3 originalPos;
-
-    void Awake()
-    {
-        sp = GetComponent<SpriteRenderer>();    
-    }
 
     void Start()
     {
@@ -51,9 +51,9 @@ public class CellInfection : MonoBehaviour
         {
             timer += Time.deltaTime;
 
-            sprite.color = Color.Lerp(startColor, infectedColor, timer / infectionTime);
+            float progress = timer / infectionTime;
+            sprite.color = Color.Lerp(startColor, infectedColor, progress);
 
-            //shaking effect
             Vector2 randomOffset = Random.insideUnitCircle * shakeIntensity;
             transform.position = originalPos + (Vector3)randomOffset;
 
@@ -61,32 +61,56 @@ public class CellInfection : MonoBehaviour
         }
 
         transform.position = originalPos;
-        sp.enabled = false;
-        bloodParticles.Play();
+
+        if (sprite != null)
+            sprite.enabled = false;
+
+        if (bloodParticles != null)
+            bloodParticles.Play();
 
         yield return new WaitForSeconds(0.7f);
 
-        int randomIndex = Random.Range(0, virusAllyPrefab.Length);
-        Instantiate(virusAllyPrefab[randomIndex], transform.position, Quaternion.identity);
+        SpawnVirus();
 
         Destroy(gameObject);
     }
 
+    void SpawnVirus()
+    {
+        if (virusAllyPrefab.Length == 0) return;
+
+        float roll = Random.value;
+        int spawnIndex = 0;
+
+        if (virusAllyPrefab.Length > 1 && roll < rareSpawnChanceIndex1)
+        {
+            spawnIndex = 1;
+        }
+        else if (virusAllyPrefab.Length > 2 && roll < rareSpawnChanceIndex1 + rareSpawnChanceIndex2)
+        {
+            spawnIndex = 2;
+        }
+
+        Instantiate(virusAllyPrefab[spawnIndex], transform.position, Quaternion.identity);
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
-        {
-            playerNearby = true;
+        if (!other.CompareTag("Player")) return;
+
+        playerNearby = true;
+
+        if (infectTextGameObj != null)
             infectTextGameObj.SetActive(true);
-        }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
-        {
-            playerNearby = false;
+        if (!other.CompareTag("Player")) return;
+
+        playerNearby = false;
+
+        if (infectTextGameObj != null)
             infectTextGameObj.SetActive(false);
-        }
     }
 }
